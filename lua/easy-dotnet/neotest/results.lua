@@ -17,13 +17,16 @@ local function to_neotest_result(detail)
   local errors = nil
   if detail.errorMessage and #detail.errorMessage > 0 then
     local is_from_test = detail.failingFrame and detail.failingFrame.isFromTest
-    -- For assertion failures show only error itself without stack trace
-    local error_messages = is_from_test and detail.errorMessage or vim.list_extend(vim.deepcopy(detail.errorMessage or {}), { detail.failingFrame.originalText })
+    local diagnostic_line = is_from_test and detail.failingFrame.line - 1 or nil
 
     errors = {
       {
-        message = table.concat(error_messages, "\n"),
-        line = is_from_test and detail.failingFrame.line - 1 or nil,
+        message = table.concat(detail.errorMessage, "\n"),
+        line = diagnostic_line,
+      },
+      {
+        message = detail.failingFrame and detail.failingFrame.originalText,
+        line = diagnostic_line,
       },
     }
   end
@@ -36,6 +39,7 @@ local function to_neotest_result(detail)
     f:close()
   end
 
+  vim.notify(vim.inspect(errors))
   return {
     status = OUTCOME_MAP[detail.outcome or ""] or "failed",
     short = detail.errorMessage and detail.errorMessage[1] or nil,
