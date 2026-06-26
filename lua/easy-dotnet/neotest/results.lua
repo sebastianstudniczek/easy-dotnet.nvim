@@ -19,14 +19,27 @@ local function to_neotest_result(detail)
     local is_from_test = detail.failingFrame and detail.failingFrame.isFromTest
     local diagnostic_line = is_from_test and detail.failingFrame.line - 1 or nil
 
+    local failures = {}
+
+    for _, item in ipairs(detail.frames) do
+      table.insert(failures, item.originalText)
+    end
+
     errors = {
       {
         message = table.concat(detail.errorMessage, "\n"),
         line = diagnostic_line,
+        severity = vim.diagnostic.severity.ERROR,
       },
       {
         message = detail.failingFrame and detail.failingFrame.originalText,
         line = diagnostic_line,
+        severity = vim.diagnostic.severity.WARN,
+      },
+      {
+        message = table.concat(failures, "\n"),
+        line = diagnostic_line,
+        severity = vim.diagnostic.severity.HINT,
       },
     }
   end
