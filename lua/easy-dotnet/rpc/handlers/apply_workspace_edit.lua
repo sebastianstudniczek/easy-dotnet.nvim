@@ -8,7 +8,8 @@ return function(params, response, throw, _)
   local client_versions = vim.lsp.util.buf_versions or {}
 
   -- backwards compatibility with easy-dotnet < 3.4.18
-  local contains_create_file_edit = vim.iter(params.documentChanges):any(function(change) return change.kind == "create" end)
+  -- local contains_create_file_edit = vim.iter(params.documentChanges):any(function(change) return change.kind == "create" end)
+  local contains_create_file_edit = false
 
   for _, change in ipairs(params.documentChanges) do
     if change.textDocument and change.textDocument.uri then
@@ -31,11 +32,27 @@ return function(params, response, throw, _)
     return
   end
 
+  -- TODO: Should i correct versions?
   for _, change in ipairs(params.documentChanges) do
     local uri = change.textDocument and change.textDocument.uri
     if type(uri) == "string" then
       local bufnr = vim.fn.bufnr(vim.uri_to_fname(uri))
       if vim.api.nvim_buf_is_valid(bufnr) then pcall(vim.api.nvim_buf_call, bufnr, function() vim.cmd("silent! update") end) end
+    end
+  end
+
+  -- TODO: Fix weird sequence of workspace/didChangeWatchedFiles request
+  local constants = require("easy-dotnet.constants")
+  local client = vim.lsp.get_clients({ name = constants.lsp_client_name })[0]
+
+  for change in ipairs(params.documentChanges) do
+    if client and change.kind == "create" then
+      vim.notify("notifying about change")
+      client:notify("workspace/didChangeWatchedFiles", {
+        changes = {
+          { uri = change.uri, type = vim.lsp.protocol.FileChangeType.Created },
+        },
+      })
     end
   end
 
