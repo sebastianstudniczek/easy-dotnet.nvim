@@ -5,6 +5,7 @@ return function(params, response, throw, validate)
     return
   end
 
+  vim.wait(5000)
   local full_path = vim.fn.expand(params.path)
   vim.cmd.edit(vim.fn.fnameescape(full_path))
   response(true)
