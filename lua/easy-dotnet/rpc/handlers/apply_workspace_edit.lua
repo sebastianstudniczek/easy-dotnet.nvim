@@ -36,42 +36,10 @@ return function(params, response, throw, _)
   for _, change in ipairs(params.documentChanges) do
     local uri = change.textDocument and change.textDocument.uri
     if type(uri) == "string" then
-      local bufnr = vim.fn.bufnr(vim.uri_to_fname(uri))
-      if vim.api.nvim_buf_is_valid(bufnr) then pcall(vim.api.nvim_buf_call, bufnr, function() vim.cmd("silent! update") end) end
-    end
-  end
-
-  -- TODO: Fix weird sequence of workspace/didChangeWatchedFiles request
-  local constants = require("easy-dotnet.constants")
-  local client = vim.lsp.get_clients({ name = constants.lsp_client_name })[1]
-
-  vim.notify("client")
-  vim.notify(vim.inspect(client))
-  vim.notify("Changes")
-  vim.notify(vim.inspect(params.documentChanges))
-  for _, change in ipairs(params.documentChanges) do
-    vim.notify(vim.inspect(change))
-
-    if client and change.kind == "create" then
-      vim.notify("notifying about change")
-      client:notify("workspace/didChangeWatchedFiles", {
-        changes = {
-          { uri = change.uri, type = vim.lsp.protocol.FileChangeType.Created },
-        },
-      })
-    end
-  end
-
-  local capabilities = vim.iter(client.dynamic_capabilities.capabilities.diagnosticProvider or {}):map(function(cap) return cap.registerOptions.identifier end):totable()
-
-  for buf, _ in pairs(client.attached_buffers) do
-    if vim.api.nvim_buf_is_loaded(buf) then
-      for _, cap in pairs(capabilities) do
-        client:request(vim.lsp.protocol.Methods.textDocument_diagnostic, {
-          identifier = cap,
-          textDocument = vim.lsp.util.make_text_document_params(buf),
-        }, nil, buf)
-      end
+      vim.defer_fn(function()
+        local bufnr = vim.fn.bufnr(vim.uri_to_fname(uri))
+        if vim.api.nvim_buf_is_valid(bufnr) then pcall(vim.api.nvim_buf_call, bufnr, function() vim.cmd("silent! update") end) end
+      end, 5000)
     end
   end
 
