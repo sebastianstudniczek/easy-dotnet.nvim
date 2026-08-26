@@ -62,5 +62,18 @@ return function(params, response, throw, _)
     end
   end
 
+  local capabilities = vim.iter(client.dynamic_capabilities.capabilities.diagnosticProvider or {}):map(function(cap) return cap.registerOptions.identifier end):totable()
+
+  for buf, _ in pairs(client.attached_buffers) do
+    if vim.api.nvim_buf_is_loaded(buf) then
+      for _, cap in pairs(capabilities) do
+        client:request(vim.lsp.protocol.Methods.textDocument_diagnostic, {
+          identifier = cap,
+          textDocument = vim.lsp.util.make_text_document_params(buf),
+        }, nil, buf)
+      end
+    end
+  end
+
   response(true)
 end
