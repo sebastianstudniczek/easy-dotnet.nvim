@@ -45,7 +45,10 @@ return function(params, response, throw, _)
   local constants = require("easy-dotnet.constants")
   local client = vim.lsp.get_clients({ name = constants.lsp_client_name })[0]
 
-  for change in ipairs(params.documentChanges) do
+  vim.notify(vim.inspect(params.documentChanges))
+  for _, change in ipairs(params.documentChanges) do
+    vim.notify(vim.inspect(change))
+
     if client and change.kind == "create" then
       vim.notify("notifying about change")
       client:notify("workspace/didChangeWatchedFiles", {
