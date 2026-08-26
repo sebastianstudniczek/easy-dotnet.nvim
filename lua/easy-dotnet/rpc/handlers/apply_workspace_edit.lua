@@ -43,8 +43,11 @@ return function(params, response, throw, _)
 
   -- TODO: Fix weird sequence of workspace/didChangeWatchedFiles request
   local constants = require("easy-dotnet.constants")
-  local client = vim.lsp.get_clients({ name = constants.lsp_client_name })[0]
+  local client = vim.lsp.get_clients({ name = constants.lsp_client_name })[1]
 
+  vim.notify("client")
+  vim.notify(vim.inspect(client))
+  vim.notify("Changes")
   vim.notify(vim.inspect(params.documentChanges))
   for _, change in ipairs(params.documentChanges) do
     vim.notify(vim.inspect(change))
